@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Maya: Perlawanan Pangeran Diponegoro (Full Offline)</title>
+    
+    <!-- CSS Murni (Vanilla CSS) agar Lab Maya 100% Rapi Tanpa Jaringan Internet -->
+    <style>
+        /* ================= RESET & BASE ================= */
+        *, *::before, *::after { box-sizing: border-box; }
+        body, h1, h2, h3, h4, p, ul, li { margin: 0; padding: 0; }
+        body { 
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; 
+            background-color: #020617; /* slate-950 */
+            color: #f1f5f9; 
+            height: 100vh; 
+            width: 100vw; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            overflow: hidden; 
+            padding: 1rem;
+        }
+        button { background: none; border: none; cursor: pointer; color: inherit; font: inherit; outline: none; }
+        input, select, textarea { font-family: inherit; }
+        .hidden { display: none !important; }
+        .font-serif { font-family: Georgia, 'Times New Roman', serif; }
+        .text-amber { color: #fbbf24; }
+        
+        /* ================= LAYOUT CONTAINER ================= */
+        .lab-container { 
+            aspect-ratio: 16 / 9; 
+            max-height: 100vh; 
+            max-width: 177.78vh; /* 16/9 * 100vh */
+            width: 100%; 
+            height: 100%; 
+            background-color: #0f172a; 
+            border: 2px solid rgba(245, 158, 11, 0.3); 
+            border-radius: 1rem; 
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6); 
+            display: flex; 
+            flex-direction: column; 
+            position: relative; 
+            overflow: hidden; 
+        }
+
+        /* ================= SPLASH SCREEN ================= */
+        .splash { 
+            position: absolute; inset: 0; z-index: 50; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            background: linear-gradient(to bottom, rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.98)), url('assets/images/splash-bg.png') center/cover; 
+            transition: opacity 1s; 
+            text-align: center; 
+        }
+        .splash-title { font-size: clamp(2rem, 5vh, 3.5rem); font-weight: bold; color: #fbbf24; margin-bottom: 0.5rem; text-shadow: 0 2px 5px rgba(0,0,0,0.9); }
+        .splash-sub { font-size: clamp(0.9rem, 2vh, 1.25rem); letter-spacing: 0.1em; text-transform: uppercase; text-shadow: 0 2px 4px rgba(0,0,0,0.9); }
+        .splash-tag { font-size: 0.8rem; color: rgba(245,158,11,0.8); margin-top: 0.5rem; font-family: monospace; }
+        
+        .loading-box { width: 18rem; margin-top: 3rem; display: flex; flex-direction: column; gap: 0.75rem; align-items: center; }
+        .loading-bar-bg { width: 100%; height: 0.5rem; background: rgba(30,41,59,0.8); border: 1px solid rgba(51,65,85,0.5); border-radius: 1rem; overflow: hidden; }
+        .loading-bar { height: 100%; background: #f59e0b; width: 0%; transition: width 0.3s; }
+        .loading-text { font-size: 0.75rem; font-weight: 600; color: #fbbf24; animation: pulse 2s infinite; }
+        
+        .btn-start { 
+            display: flex; align-items: center; gap: 0.5rem; 
+            padding: 0.8rem 2.5rem; background: #f59e0b; color: #020617; 
+            font-weight: bold; border-radius: 2rem; margin-top: 2.5rem; 
+            transition: transform 0.3s; box-shadow: 0 0 20px rgba(245,158,11,0.4); 
+        }
+        .btn-start:hover { transform: scale(1.05); background: #fbbf24; }
+
+        /* ================= HEADER & NAV ================= */
+        .header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 0.75rem 1.5rem; flex-shrink: 0;
+            background: linear-gradient(to right, #451a03, #0f172a, #451a03); 
+            border-bottom: 1px solid rgba(245,158,11,0.2); 
+        }
+        .header-left, .header-right { display: flex; align-items: center; gap: 0.75rem; }
+        .header-logo { width: 2.5rem; height: 2.5rem; background: #d97706; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; color: #020617; }
+        .header-title { font-size: 1.1rem; font-weight: bold; color: #fbbf24; }
+        .header-desc { font-size: 0.75rem; color: #94a3b8; }
+        
+        .btn-sm { padding: 0.4rem 0.75rem; border-radius: 0.5rem; font-size: 0.75rem; display: flex; align-items: center; gap: 0.5rem; border: 1px solid; transition: background 0.2s; }
+        .btn-sound { background: #1e293b; color: #fbbf24; border-color: #334155; }
+        .btn-reset { background: rgba(69,10,10,0.4); color: #f87171; border-color: rgba(239,68,68,0.3); }
+        .btn-reset:hover { background: rgba(69,10,10,0.8); }
+
+        .nav { display: flex; gap: 0.5rem; padding: 0.5rem 1.5rem; background: rgba(30,41,59,0.8); border-bottom: 1px solid rgba(51,65,85,0.5); flex-shrink: 0; }
+        .tab-btn { padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; color: #94a3b8; transition: all 0.2s; }
+        .tab-btn:hover { color: #f1f5f9; background: #334155; }
+        .tab-btn.active { background: #f59e0b; color: #020617; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); }
+        
+        /* ================= MAIN CONTENT & PANELS ================= */
+        .main { flex-grow: 1; padding: 1.5rem; overflow: hidden; position: relative; }
+        .tab-pane { display: none; height: 100%; gap: 1.5rem; }
+        .tab-pane.active { display: flex; }
+        
+        .panel { background: rgba(30,41,59,0.4); border: 1px solid rgba(51,65,85,0.5); border-radius: 0.75rem; padding: 1.25rem; display: flex; flex-direction: column; }
+        .flex-row { display: flex; flex-direction: row; gap: 1.5rem; width: 100%; }
+        .flex-col { display: flex; flex-direction: column; gap: 1rem; width: 100%; }
+        .flex-1 { flex: 1; }
+        .flex-2 { flex: 2; }
+        .justify-between { justify-content: space-between; }
+        .align-center { align-items: center; }
+        
+        /* Typography */
+        .badge { display: inline-flex; align-items: center; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+        .badge-amber { background: rgba(245,158,11,0.1); color: #fbbf24; border: 1px solid rgba(245,158,11,0.2); }
+        .badge-emerald { background: rgba(16,185,129,0.1); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+        .badge-blue { background: rgba(59,130,246,0.1); color: #60a5fa; border: 1px solid rgba(59,130,246,0.2); }
+        .title-panel { font-size: 1.25rem; font-weight: bold; color: #fbbf24; margin-top: 0.5rem; margin-bottom: 0.75rem; }
+        .text-body { font-size: 0.85rem; color: #cbd5e1; line-height: 1.6; }
+        
+        /* Audio Narrator Box */
+        .audio-box { background: rgba(69,26,3,0.2); border: 1px solid rgba(245,158,11,0.2); padding: 0.75rem; border-radius: 0.5rem; display: flex; align-items: center; gap: 0.75rem; margin-top: auto; }
+        .play-btn { width: 2.5rem; height: 2.5rem; border-radius: 50%; background: #f59e0b; color: #020617; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s;}
+        .play-btn:hover { background: #fbbf24; }
+        
+        /* Grid Prosedur */
+        .grid-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1rem; }
+        .step-card { background: rgba(15,23,42,0.6); padding: 1rem; border-radius: 0.5rem; border: 1px solid rgba(51,65,85,0.5); display: flex; flex-direction: column; gap: 0.5rem; }
+        .step-num { width: 2rem; height: 2rem; border-radius: 50%; background: #f59e0b; color: #020617; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.875rem; }
+        
+        /* Map & Controls (Simulasi) */
+        .map-container { flex-grow: 1; background: #020617; border-radius: 0.75rem; border: 1px solid #334155; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .map-wrapper { flex-grow: 1; position: relative; background: #020617; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .map-svg { width: 100%; height: 100%; }
+        .map-marker { cursor: pointer; transition: transform 0.2s; transform-box: fill-box; transform-origin: center; }
+        .map-marker:hover { transform: scale(1.15); }
+        
+        .hud { position: absolute; top: 0.75rem; left: 0.75rem; background: rgba(15,23,42,0.9); border: 1px solid rgba(51,65,85,0.6); padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.7rem; pointer-events: none; }
+        .popup { position: absolute; bottom: 0.75rem; right: 0.75rem; width: 20rem; background: rgba(15,23,42,0.95); border: 1px solid rgba(245,158,11,0.4); padding: 0.75rem; border-radius: 0.5rem; font-size: 0.75rem; transition: transform 0.3s, opacity 0.3s; transform: translateY(10px); opacity: 0; pointer-events: none; }
+        .popup.show { transform: translateY(0); opacity: 1; pointer-events: auto; }
+        
+        .controls { background: #0f172a; padding: 1rem; display: flex; align-items: center; gap: 1.5rem; border-top: 1px solid #1e293b; flex-shrink: 0; }
+        .slider-group { flex: 2; display: flex; flex-direction: column; gap: 0.5rem; }
+        .slider-labels { display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 600; color: #cbd5e1; }
+        .slider { -webkit-appearance: none; width: 100%; height: 0.4rem; background: #1e293b; border-radius: 1rem; outline: none; }
+        .slider::-webkit-slider-thumb { -webkit-appearance: none; width: 1.2rem; height: 1.2rem; border-radius: 50%; background: #f59e0b; cursor: pointer; }
+        .btn-group { flex: 1; display: flex; gap: 0.5rem; }
+        .btn-taktik { flex: 1; padding: 0.5rem; border-radius: 0.5rem; font-size: 0.75rem; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 0.4rem; transition: 0.2s; }
+        .btn-gerilya { background: rgba(2,44,34,0.4); border: 1px solid rgba(16,185,129,0.3); color: #34d399; }
+        .btn-gerilya.active { background: #10b981; color: #020617; }
+        .btn-benteng { background: rgba(23,37,84,0.4); border: 1px solid rgba(59,130,246,0.3); color: #60a5fa; }
+        .btn-benteng.active { background: #3b82f6; color: #020617; }
+        
+        /* Analisis Panel */
+        .analysis-panel { width: 22rem; flex-shrink: 0; display: flex; flex-direction: column; }
+        .stat-bar-bg { width: 100%; background: #020617; height: 0.4rem; border-radius: 1rem; overflow: hidden; margin-top: 0.3rem; }
+        .stat-bar { height: 100%; transition: width 0.5s; }
+        .conclusion-box { background: rgba(15,23,42,0.4); border: 1px solid rgba(51,65,85,0.4); padding: 0.75rem; border-radius: 0.5rem; margin-top: auto; font-size: 0.75rem; }
+        
+        /* LKPD Form */
+        .form-group { background: rgba(15,23,42,0.4); padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #1e293b; margin-bottom: 1rem; }
+        .input-field { width: 100%; background: #1e293b; border: 1px solid #334155; border-radius: 0.25rem; padding: 0.6rem; color: #f1f5f9; font-size: 0.8rem; outline: none; margin-top: 0.5rem; }
+        .input-field:focus { border-color: #f59e0b; }
+        .custom-scroll { overflow-y: auto; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: rgba(30,41,59,0.5); }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        
+        /* Pengembang */
+        .dev-profile { width: 9rem; height: 9rem; border-radius: 50%; border: 4px solid rgba(245,158,11,0.4); overflow: hidden; flex-shrink: 0; box-shadow: 0 0 25px rgba(245,158,11,0.15); position: relative; }
+        .dev-profile img { width: 100%; height: 100%; object-fit: cover; }
+        .dev-badge { position: absolute; bottom: 0.5rem; right: 0.5rem; width: 2.2rem; height: 2.2rem; background: linear-gradient(to top right, #d97706, #fbbf24); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #0f172a; color: #0f172a; }
+        .dev-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+        .dev-tag { background: rgba(15,23,42,0.6); padding: 0.3rem 0.6rem; border-radius: 0.3rem; font-size: 0.7rem; border: 1px solid rgba(51,65,85,0.5); display: flex; align-items: center; gap: 0.3rem; }
+        .ai-note { background: rgba(30,27,75,0.5); border: 1px solid rgba(99,102,241,0.4); padding: 0.75rem; border-radius: 0.5rem; font-size: 0.75rem; color: #c7d2fe; display: flex; gap: 0.5rem; margin-top: 1rem; }
+
+        /* Utilities & Animations */
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @keyframes ping { 75%, 100% { transform: scale(2); opacity: 0; } }
+        .animate-pulse { animation: pulse 2s infinite; }
+        .animate-ping { animation: ping 1.5s infinite; }
+        .transition-opacity { transition: opacity 0.5s; }
+        .toast { position: absolute; bottom: 1rem; left: 50%; transform: translateX(-50%); background: #f59e0b; color: #020617; font-weight: bold; padding: 0.6rem 1.2rem; border-radius: 0.5rem; font-size: 0.8rem; opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 100; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5); }
+        .toast.show { opacity: 1; }
+        
+        .icon { width: 1.1rem; height: 1.1rem; fill: currentColor; }
+        .icon-sm { width: 0.9rem; height: 0.9rem; fill: currentColor; }
+        .icon-lg { width: 1.4rem; height: 1.4rem; fill: currentColor; }
+        .mt-2 { margin-top: 0.5rem; } .mb-2 { margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body>
+
+    <!-- INLINE SVG SPRITES (Offline Icons pengganti FontAwesome) -->
+    <svg width="0" height="0" class="hidden">
+        <defs>
+            <symbol id="icon-military" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C10.34 2 9 3.34 9 5C9 6.66 10.34 8 12 8C13.66 8 15 6.66 15 5C15 3.34 13.66 2 12 2M12 10C9.33 10 4 11.34 4 14V22H20V14C20 11.34 14.67 10 12 10Z"/></symbol>
+            <symbol id="icon-volume-high" viewBox="0 0 24 24"><path fill="currentColor" d="M14,3.23V5.29C16.89,6.15 19,8.83 19,12C19,15.17 16.89,17.84 14,18.7V20.77C18,19.86 21,16.28 21,12C21,7.72 18,4.14 14,3.23M16.5,12C16.5,10.23 15.5,8.71 14,7.97V16C15.5,15.29 16.5,13.76 16.5,12M3,9V15H7L12,20V4L7,9H3Z"/></symbol>
+            <symbol id="icon-volume-xmark" viewBox="0 0 24 24"><path fill="currentColor" d="M12,4L9.91,6.09L12,8.18M4.27,3L3,4.27L7.73,9H3V15H7L12,20V13.27L16.25,17.53C15.58,18.04 14.83,18.46 14,18.7V20.77C15.38,20.45 16.63,19.82 17.68,18.96L19.73,21L21,19.73L12,10.73M19,12C19,12.94 18.8,13.82 18.46,14.64L19.97,16.15C20.62,14.91 21,13.5 21,12C21,7.72 18,4.14 14,3.23V5.29C16.89,6.15 19,8.83 19,12M16.5,12C16.5,10.23 15.5,8.71 14,7.97V10.18L16.45,12.63C16.5,12.43 16.5,12.21 16.5,12Z"/></symbol>
+            <symbol id="icon-reset" viewBox="0 0 24 24"><path fill="currentColor" d="M12,18A6,6 0 0,1 6,12C6,11 6.25,10.03 6.7,9.2L5.24,7.74C4.46,8.97 4,10.43 4,12A8,8 0 0,0 12,20V23L16,19L12,15M12,4V1L8,5L12,9V6A6,6 0 0,1 18,12C18,13 17.75,13.97 17.3,14.8L18.76,16.26C19.54,15.03 20,13.57 20,12A8,8 0 0,0 12,4Z"/></symbol>
+            <symbol id="icon-book" viewBox="0 0 24 24"><path fill="currentColor" d="M18 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V4C20 2.9 19.1 2 18 2M18 20H6V4H18V20M16 10H8V8H16V10M16 14H8V12H16V14M12 18H8V16H12V18Z"/></symbol>
+            <symbol id="icon-list" viewBox="0 0 24 24"><path fill="currentColor" d="M3 13H5V11H3V13M3 17H5V15H3V17M3 9H5V7H3V9M7 13H21V11H7V13M7 17H21V15H7V17M7 7V9H21V7H7Z"/></symbol>
+            <symbol id="icon-chess" viewBox="0 0 24 24"><path fill="currentColor" d="M3 3H21V21H3V3M5 5V9H9V5H5M11 5V9H15V5H11M17 5V9H19V5H17M5 11V15H9V11H5M11 11V15H15V11H11M17 11V15H19V11H17M5 17V19H9V17H5M11 17V19H15V17H11M17 17V19H19V17H17Z"/></symbol>
+            <symbol id="icon-invoice" viewBox="0 0 24 24"><path fill="currentColor" d="M14 2H6C4.89 2 4 2.89 4 4V20C4 21.11 4.89 22 6 22H18C19.11 22 20 21.11 20 20V8L14 2M13 19H7V17H13V19M17 15H7V13H17V15M17 11H7V9H17V11M13 9V3.5L18.5 9H13Z"/></symbol>
+            <symbol id="icon-user" viewBox="0 0 24 24"><path fill="currentColor" d="M12 4A4 4 0 0 1 16 8A4 4 0 0 1 12 12A4 4 0 0 1 8 8A4 4 0 0 1 12 4M12 14C16.42 14 20 15.79 20 18V20H4V18C4 15.79 7.58 14 12 14Z"/></symbol>
+            <symbol id="icon-play" viewBox="0 0 24 24"><path fill="currentColor" d="M8,5.14V19.14L19,12.14L8,5.14Z"/></symbol>
+            <symbol id="icon-pause" viewBox="0 0 24 24"><path fill="currentColor" d="M14,19H18V5H14M6,19H10V5H6V19Z"/></symbol>
+            <symbol id="icon-info" viewBox="0 0 24 24"><path fill="currentColor" d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"/></symbol>
+            <symbol id="icon-camp" viewBox="0 0 24 24"><path fill="currentColor" d="M22 17L12 3L2 17H6L12 8.5L18 17H22M12 11.5L14 17H10L12 11.5Z"/></symbol>
+            <symbol id="icon-fort" viewBox="0 0 24 24"><path fill="currentColor" d="M21 9V11H19V15H17V11H15V9H17V7H15V5H17V3H19V5H21V7H19V9H21M7 9V11H5V15H3V11H1V9H3V7H1V5H3V3H5V5H7V7H5V9H7M21 17V21H15V17H13V21H11V17H9V21H3V17H1V21C1 21.5 1.5 22 2 22H22C22.5 22 23 21.5 23 21V17H21Z"/></symbol>
+            <symbol id="icon-x" viewBox="0 0 24 24"><path fill="currentColor" d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></symbol>
+            <symbol id="icon-grad" viewBox="0 0 24 24"><path fill="currentColor" d="M12,3L1,9L4,10.64V17.5C4,18.88 7.58,20 12,20C16.42,20 20,18.88 20,17.5V10.64L23,9L12,3M12,5.16L19.5,9L12,12.84L4.5,9L12,5.16M18,17.5C18,18.33 15.31,19 12,19C8.69,19 6,18.33 6,17.5V11.72L12,15L18,11.72V17.5Z"/></symbol>
+            <symbol id="icon-award" viewBox="0 0 24 24"><path fill="currentColor" d="M12,2A5,5 0 0,1 17,7C17,8.8 16.03,10.37 14.58,11.26L16,19L12,17L8,19L9.42,11.26C7.97,10.37 7,8.8 7,7A5,5 0 0,1 12,2M12,4A3,3 0 0,0 9,7A3,3 0 0,0 12,10A3,3 0 0,0 15,7A3,3 0 0,0 12,4Z"/></symbol>
+        </defs>
+    </svg>
+
+    <!-- Container Utama -->
+    <div class="lab-container">
+        
+        <!-- Splash Screen -->
+        <div id="splash-screen" class="splash">
+            <div class="splash-content">
+                <h1 class="splash-title">LAB MAYA SEJARAH</h1>
+                <p class="splash-sub">Perlawanan Pangeran Diponegoro</p>
+                <p class="splash-tag">[Mode Akses Bebas Internet]</p>
+            </div>
+
+            <div id="loading-container" class="loading-box">
+                <div class="loading-bar-bg">
+                    <div id="loading-bar" class="loading-bar"></div>
+                </div>
+                <p id="loading-text" class="loading-text">Memuat Aset Lab... 0%</p>
+            </div>
+
+            <button id="btn-start-lab" onclick="startLab()" class="btn-start hidden">
+                <svg class="icon"><use href="#icon-play"></use></svg> Mulai Lab Maya
+            </button>
+        </div>
+
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="header-logo">
+                    <svg class="icon-lg"><use href="#icon-military"></use></svg>
+                </div>
+                <div>
+                    <h1 class="header-title">LAB MAYA SEJARAH INTERAKTIF</h1>
+                    <p class="header-desc">Fase F SMA • Perang Jawa (1825–1830)</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <button id="btn-sound-toggle" onclick="toggleMute()" class="btn-sm btn-sound">
+                    <svg id="sound-icon" class="icon"><use href="#icon-volume-high"></use></svg>
+                    <span id="sound-text">Suara: ON</span>
+                </button>
+                <button onclick="resetLab()" class="btn-sm btn-reset">
+                    <svg class="icon"><use href="#icon-reset"></use></svg>
+                    <span>Reset Lab</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Navigasi -->
+        <nav class="nav">
+            <button onclick="switchTab('teori')" id="tab-teori" class="tab-btn active">
+                <svg class="icon"><use href="#icon-book"></use></svg> Teori Dasar
+            </button>
+            <button onclick="switchTab('prosedur')" id="tab-prosedur" class="tab-btn">
+                <svg class="icon"><use href="#icon-list"></use></svg> Panduan
+            </button>
+            <button onclick="switchTab('simulasi')" id="tab-simulasi" class="tab-btn">
+                <svg class="icon text-amber animate-pulse"><use href="#icon-chess"></use></svg> Peta Simulasi
+            </button>
+            <button onclick="switchTab('lkpd')" id="tab-lkpd" class="tab-btn">
+                <svg class="icon"><use href="#icon-invoice"></use></svg> LKPD Siswa
+            </button>
+            <button onclick="switchTab('pengembang')" id="tab-pengembang" class="tab-btn">
+                <svg class="icon"><use href="#icon-user"></use></svg> Pengembang
+            </button>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main">
+
+            <!-- TAB 1: TEORI -->
+            <section id="content-teori" class="tab-pane active">
+                <div class="panel flex-1 justify-between">
+                    <div>
+                        <span class="badge badge-amber">Latar Belakang</span>
+                        <h2 class="title-serif">Pecahnya Perang Jawa (1825–1830)</h2>
+                        <p class="text-body mb-2">
+                            Perang Jawa dipicu oleh akumulasi kekecewaan Pangeran Diponegoro terhadap campur tangan Hindia Belanda dalam urusan internal Kesultanan Yogyakarta, beban pajak yang mencekik rakyat, serta puncaknya: pemasangan patok jalan kereta yang melintasi makam leluhur Pangeran di Tegalrejo tanpa izin.
+                        </p>
+                        <p class="text-body">
+                            Perang ini menjadi salah satu pertempuran terbesar yang dihadapi Belanda di Nusantara, menelan korban hampir 200.000 jiwa penduduk Jawa dan merugikan kas kolonial hingga puluhan juta Gulden.
+                        </p>
+                    </div>
+                    <div class="audio-box">
+                        <button onclick="playNarrator('teori')" class="play-btn">
+                            <svg id="narrator-play-icon" class="icon"><use href="#icon-play"></use></svg>
+                        </button>
+                        <div>
+                            <p style="font-size:0.8rem; font-weight:bold; color:#fbbf24;">Narator Audio TTS</p>
+                            <p style="font-size:0.75rem; color:#94a3b8;">Klik untuk mendengarkan ringkasan.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex-col flex-1">
+                    <div class="panel flex-1">
+                        <span class="badge badge-emerald" style="width: max-content;">STRATEGI DIPONEGORO</span>
+                        <h3 class="title-panel" style="color: #34d399;">Perang Gerilya & Mobilisasi Rakyat</h3>
+                        <p class="text-body">
+                            Memanfaatkan kondisi geografis berbukit (Gua Selarong, Kulon Progo) untuk melancarkan serangan kejutan, memutus jalur logistik musuh, lalu menghilang ke dalam hutan. Didukung penuh oleh kaum ulama dan bangsawan.
+                        </p>
+                    </div>
+                    <div class="panel flex-1" style="background: rgba(23,37,84,0.3);">
+                        <span class="badge badge-blue" style="width: max-content;">STRATEGI BELANDA</span>
+                        <h3 class="title-panel" style="color: #60a5fa;">Sistem Benteng Stelsel (Jenderal De Kock)</h3>
+                        <p class="text-body">
+                            Mendirikan jaringan benteng pertahanan di setiap daerah yang dikuasai, kemudian dihubungkan dengan jalan raya militer. Strategi ini mempersempit ruang gerak pasukan gerilya.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: PROSEDUR -->
+            <section id="content-prosedur" class="tab-pane">
+                <div class="panel flex-1">
+                    <h2 class="title-serif flex-row align-center" style="gap: 0.5rem;"><svg class="icon-lg"><use href="#icon-info"></use></svg> Panduan Simulasi Lab Maya</h2>
+                    <p class="text-body mb-2">
+                        Lab maya ini mensimulasikan peta taktis Perang Jawa. Siswa bertindak sebagai penentu strategi sejarah untuk menguji keampuhan taktik Gerilya Diponegoro melawan Benteng Stelsel.
+                    </p>
+
+                    <div class="grid-steps">
+                        <div class="step-card">
+                            <div class="step-num">1</div>
+                            <h4 style="font-size:0.75rem; color:#fbbf24; font-weight:bold;">Buka Simulasi</h4>
+                            <p style="font-size:0.7rem; color:#94a3b8;">Klik tab "Peta Simulasi Taktis" pada menu atas.</p>
+                        </div>
+                        <div class="step-card">
+                            <div class="step-num">2</div>
+                            <h4 style="font-size:0.75rem; color:#fbbf24; font-weight:bold;">Pilih Fase</h4>
+                            <p style="font-size:0.7rem; color:#94a3b8;">Atur slider garis waktu fase perang.</p>
+                        </div>
+                        <div class="step-card">
+                            <div class="step-num">3</div>
+                            <h4 style="font-size:0.75rem; color:#fbbf24; font-weight:bold;">Gunakan Strategi</h4>
+                            <p style="font-size:0.7rem; color:#94a3b8;">Gunakan kontrol untuk menerapkan taktik Gerilya/Benteng.</p>
+                        </div>
+                        <div class="step-card">
+                            <div class="step-num">4</div>
+                            <h4 style="font-size:0.75rem; color:#fbbf24; font-weight:bold;">Isi LKPD</h4>
+                            <p style="font-size:0.7rem; color:#94a3b8;">Kerjakan evaluasi di tab LKPD Siswa.</p>
+                        </div>
+                    </div>
+                    
+                    <div style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); padding: 1rem; border-radius: 0.5rem; display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
+                        <span style="color:#fbbf24; font-size:0.85rem; font-weight:600;">Pastikan volume perangkat menyala untuk efek audio optimal.</span>
+                        <button onclick="switchTab('simulasi')" style="background:#f59e0b; color:#020617; padding:0.5rem 1rem; border-radius:0.5rem; font-weight:bold; transition: 0.2s;">Mulai Simulasi</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: SIMULASI -->
+            <section id="content-simulasi" class="tab-pane">
+                <div class="map-container">
+                    <div class="map-wrapper">
+                        <!-- Peta Vector Offline -->
+                        <svg class="map-svg" viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="800" height="450" fill="#020617"/>
+                            <path d="M 50,400 Q 150,300 200,320 T 400,330 T 600,310 T 750,360 L 800,450 L 0,450 Z" fill="#0f172a" stroke="#1e293b" stroke-width="2" />
+                            <path d="M 0,380 Q 100,280 250,220 T 500,210 T 800,280 L 800,450 L 0,450 Z" fill="#141f32" />
+                            
+                            <polygon points="450,230 490,320 410,320" fill="#1e293b" stroke="#334155" stroke-width="1.5" />
+                            <polygon points="450,230 470,270 430,270" fill="#475569" />
+                            <text x="450" y="340" fill="#64748b" font-size="10" text-anchor="middle" font-family="sans-serif">G. Merapi</text>
+                            <path d="M 180,350 Q 220,270 260,350 Q 300,260 340,360" fill="none" stroke="#334155" stroke-width="3" stroke-linecap="round" />
+                            <text x="260" y="380" fill="#64748b" font-size="10" text-anchor="middle" font-family="sans-serif">Peg. Menoreh</text>
+
+                            <g class="map-marker" onclick="showLocationInfo('Selarong')">
+                                <circle cx="320" cy="310" r="12" fill="#10b981" fill-opacity="0.2" class="animate-ping" />
+                                <circle cx="320" cy="310" r="7" fill="#10b981" stroke="#34d399" stroke-width="2" />
+                                <text x="320" y="295" fill="#34d399" font-size="11" font-weight="bold" text-anchor="middle">Gua Selarong</text>
+                            </g>
+                            <g class="map-marker" onclick="showLocationInfo('Tegalrejo')">
+                                <circle cx="400" cy="270" r="12" fill="#ef4444" fill-opacity="0.2" class="animate-ping" />
+                                <circle cx="400" cy="270" r="7" fill="#ef4444" stroke="#f87171" stroke-width="2" />
+                                <text x="400" y="255" fill="#f87171" font-size="11" font-weight="bold" text-anchor="middle">Tegalrejo</text>
+                            </g>
+                            <g class="map-marker" onclick="showLocationInfo('Yogyakarta')">
+                                <rect x="360" y="290" width="70" height="24" rx="4" fill="#1e1b4b" stroke="#4f46e5" stroke-width="1.5" />
+                                <text x="395" y="306" fill="#e0e7ff" font-size="10" font-weight="bold" text-anchor="middle">Yogyakarta</text>
+                            </g>
+                            <g class="map-marker" onclick="showLocationInfo('Magelang')">
+                                <rect x="370" y="190" width="60" height="20" rx="3" fill="#1e293b" stroke="#3b82f6" stroke-width="1" />
+                                <text x="400" y="204" fill="#93c5fd" font-size="9" text-anchor="middle">Magelang</text>
+                            </g>
+
+                            <g id="benteng-group" class="transition-opacity opacity-0">
+                                <line x1="395" y1="302" x2="400" y2="204" stroke="#ef4444" stroke-width="2" stroke-dasharray="4" class="animate-pulse" />
+                                <line x1="395" y1="302" x2="320" y2="310" stroke="#ef4444" stroke-width="2" stroke-dasharray="4" />
+                                <line x1="400" y1="204" x2="320" y2="310" stroke="#ef4444" stroke-width="2" stroke-dasharray="4" />
+                                <polygon points="385,280 395,280 390,270" fill="#3b82f6" stroke="#93c5fd" stroke-width="1"/>
+                                <polygon points="310,295 320,295 315,285" fill="#3b82f6" stroke="#93c5fd" stroke-width="1"/>
+                                <polygon points="415,220 425,220 420,210" fill="#3b82f6" stroke="#93c5fd" stroke-width="1"/>
+                                <text x="250" y="150" fill="#60a5fa" font-size="12" font-style="italic">Jaringan Benteng Stelsel Aktif</text>
+                            </g>
+                            <g id="gerilya-group" class="transition-opacity opacity-0">
+                                <circle cx="250" cy="330" r="4" fill="#10b981" />
+                                <circle cx="280" cy="300" r="4" fill="#10b981" />
+                                <circle cx="340" cy="350" r="4" fill="#10b981" />
+                                <path d="M 240,340 L 260,320" stroke="#10b981" stroke-width="1.5" />
+                                <path d="M 270,310 L 290,290" stroke="#10b981" stroke-width="1.5" />
+                                <text x="200" y="270" fill="#34d399" font-size="11" font-style="italic">Gerilyawan Menyebar di Hutan</text>
+                            </g>
+                        </svg>
+
+                        <!-- HUD -->
+                        <div class="hud">
+                            <p style="font-weight:bold; color:#fbbf24; text-transform:uppercase;">Status Medan</p>
+                            <p id="hud-kekuatan-ri" style="color:#34d399; margin-top:0.2rem;">Laskar Rakyat: 100%</p>
+                            <p id="hud-kekuatan-nl" style="color:#60a5fa;">Garnisun Belanda: 100%</p>
+                        </div>
+
+                        <!-- Popup -->
+                        <div id="info-lokasi" class="popup">
+                            <div class="popup-header">
+                                <h4 id="info-nama-lokasi" style="color:#fbbf24; font-weight:bold; font-size:0.9rem;">Gua Selarong</h4>
+                                <button onclick="closeLocationInfo()" style="color:#cbd5e1;"><svg class="icon"><use href="#icon-x"></use></svg></button>
+                            </div>
+                            <p id="info-deskripsi-lokasi" style="color:#e2e8f0; line-height:1.5;"></p>
+                        </div>
+                    </div>
+
+                    <!-- Controls -->
+                    <div class="controls">
+                        <div class="slider-group">
+                            <div class="slider-labels">
+                                <span>Fase 1 (1825)</span>
+                                <span>Fase 2 (1826)</span>
+                                <span>Fase 3 (1828)</span>
+                            </div>
+                            <input type="range" id="fase-slider" min="1" max="3" value="1" oninput="changeFase(this.value)" class="slider">
+                        </div>
+                        <div class="btn-group">
+                            <button id="btn-taktik-gerilya" onclick="toggleTaktik('gerilya')" class="btn-taktik btn-gerilya">
+                                <svg class="icon-sm"><use href="#icon-camp"></use></svg> Gerilya
+                            </button>
+                            <button id="btn-taktik-benteng" onclick="toggleTaktik('benteng')" class="btn-taktik btn-benteng">
+                                <svg class="icon-sm"><use href="#icon-fort"></use></svg> Benteng
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel Analisis -->
+                <div class="panel analysis-panel">
+                    <h3 style="font-size:0.8rem; font-weight:bold; color:#fbbf24; text-transform:uppercase; margin-bottom:0.75rem;">Analisis Eksperimen</h3>
+                    
+                    <div style="background:rgba(15,23,42,0.6); padding:0.75rem; border-radius:0.5rem; margin-bottom:1rem; border:1px solid #1e293b;">
+                        <p id="fase-title" style="font-weight:bold; color:#f59e0b; font-size:0.85rem;">Fase 1: Pengepungan Tegalrejo</p>
+                        <p id="fase-desc" style="font-size:0.75rem; color:#94a3b8; margin-top:0.3rem;">Belanda menyerang kediaman Pangeran Diponegoro.</p>
+                    </div>
+
+                    <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                        <div>
+                            <div style="display:flex; justify-content:space-between; font-size:0.7rem; margin-bottom:0.2rem;">
+                                <span style="color:#e2e8f0;">Kerugian Belanda</span>
+                                <span id="stat-rugi-belanda" style="color:#f87171;">Sangat Tinggi</span>
+                            </div>
+                            <div class="stat-bar-bg"><div id="bar-rugi-belanda" class="stat-bar" style="background:#ef4444; width:85%;"></div></div>
+                        </div>
+                        <div>
+                            <div style="display:flex; justify-content:space-between; font-size:0.7rem; margin-bottom:0.2rem;">
+                                <span style="color:#e2e8f0;">Mobilitas Gerilya</span>
+                                <span id="stat-mobilitas" style="color:#34d399;">Sangat Bebas</span>
+                            </div>
+                            <div class="stat-bar-bg"><div id="bar-mobilitas" class="stat-bar" style="background:#10b981; width:90%;"></div></div>
+                        </div>
+                        <div>
+                            <div style="display:flex; justify-content:space-between; font-size:0.7rem; margin-bottom:0.2rem;">
+                                <span style="color:#e2e8f0;">Kontrol Kolonial</span>
+                                <span id="stat-kontrol" style="color:#60a5fa;">Terbatas</span>
+                            </div>
+                            <div class="stat-bar-bg"><div id="bar-kontrol" class="stat-bar" style="background:#3b82f6; width:25%;"></div></div>
+                        </div>
+                    </div>
+
+                    <div class="conclusion-box">
+                        <p style="font-weight:bold; color:#fbbf24; margin-bottom:0.3rem; display:flex; align-items:center;"><svg class="icon-sm" style="margin-right:0.3rem;"><use href="#icon-info"></use></svg> Kesimpulan:</p>
+                        <p id="analisis-kesimpulan" style="color:#cbd5e1;">Selama fase awal, strategi gerilya rakyat sangat mendominasi medan karena pemahaman wilayah yang superior.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: LKPD -->
+            <section id="content-lkpd" class="tab-pane">
+                <div class="panel flex-1">
+                    <span class="badge badge-amber" style="width:max-content;">Lembar Kerja</span>
+                    <h2 class="title-serif">Uji Evaluasi Mandiri</h2>
+                    <p class="text-body mb-2">Kerjakan pertanyaan esai dan pilihan ganda interaktif berikut berdasarkan hasil analisis taktik yang Anda peroleh.</p>
+                    
+                    <div style="background:rgba(15,23,42,0.6); padding:1rem; border-radius:0.5rem; border:1px solid #1e293b; margin-top:auto;">
+                        <p style="font-size:0.8rem; font-weight:bold; color:#fbbf24; margin-bottom:0.5rem; display:flex; align-items:center;"><svg class="icon-sm" style="margin-right:0.3rem;"><use href="#icon-grad"></use></svg> Target Pembelajaran:</p>
+                        <ul style="font-size:0.75rem; color:#94a3b8; padding-left:1.2rem; line-height:1.6;">
+                            <li>Menganalisis taktik Benteng Stelsel.</li>
+                            <li>Mengevaluasi kegagalan gerilya di akhir perang.</li>
+                            <li>Mengambil keteladanan dari heroisme Diponegoro.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="panel flex-2 custom-scroll" style="background: rgba(30,41,59,0.2);">
+                    <div class="form-group">
+                        <p style="font-size:0.75rem; font-weight:bold; color:#fbbf24; margin-bottom:0.5rem;">PERTANYAAN 1</p>
+                        <label style="font-size:0.85rem; font-weight:500;">Mengapa taktik Benteng Stelsel berhasil mematahkan Gerilya Diponegoro?</label>
+                        <select id="lkpd-q1" class="input-field">
+                            <option value="">-- Pilih Jawaban Terbaik --</option>
+                            <option value="A">Belanda memiliki jumlah prajurit modern sepuluh kali lipat</option>
+                            <option value="B">Benteng Stelsel mempersempit mobilitas gerilyawan dan memutus logistik</option>
+                            <option value="C">Benteng Stelsel melindungi jalur rempah-rempah yang diekspor Belanda</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <p style="font-size:0.75rem; font-weight:bold; color:#fbbf24; margin-bottom:0.5rem;">PERTANYAAN 2</p>
+                        <label style="font-size:0.85rem; font-weight:500;">Apa nilai kepahlawanan utama dari perjuangan Pangeran Diponegoro?</label>
+                        <textarea id="lkpd-q2" class="input-field" style="height:5rem; resize:none;" placeholder="Tuliskan pendapat analisis historis Anda di sini..."></textarea>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #334155; padding-top:1rem; margin-top:auto;">
+                        <div id="lkpd-status" style="font-size:0.8rem; color:#94a3b8;">Belum diserahkan</div>
+                        <button onclick="submitLKPD()" style="background:#f59e0b; color:#020617; font-weight:bold; padding:0.5rem 1.5rem; border-radius:0.5rem; transition:0.2s;">Submit & Nilai</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: PENGEMBANG -->
+            <section id="content-pengembang" class="tab-pane">
+                <div class="panel panel-grow">
+                    <div style="display:flex; gap:2rem; align-items:flex-start;">
+                        
+                        <div class="dev-profile">
+                            <img src="assets/images/foto-pengembang.png" alt="Foto Mitha Setianie, S.Pd.">
+                            <div class="dev-badge"><svg class="icon"><use href="#icon-award"></use></svg></div>
+                        </div>
+
+                        <div style="flex:1;">
+                            <span class="badge badge-amber mb-2">Pengembang Media Ajar</span>
+                            <h2 style="font-size:1.75rem; font-family:Georgia,serif; font-weight:bold; color:#f1f5f9; margin-bottom:0.5rem;">Mitha Setianie, S.Pd.</h2>
+                            <p class="text-body" style="max-width:35rem;">
+                                Aplikasi simulasi taktis ini dikembangkan sebagai alat bantu ajar sejarah interaktif bagi siswa SMA kelas XI (Fase F) Kurikulum Merdeka. Membantu menghadirkan visualisasi taktis medan peperangan agar siswa dapat memahami secara mendalam strategi heroik Pangeran Diponegoro.
+                            </p>
+
+                            <div class="ai-note">
+                                <svg class="icon-sm" style="flex-shrink:0; margin-top:0.1rem;"><use href="#icon-info"></use></svg>
+                                <span><strong>Catatan Pengembangan:</strong> Arsitektur struktur kode lab maya, penyusunan draf materi sejarah, narasi audio, serta aset gambar dalam aplikasi ini disusun dan di-<em>generate</em> menggunakan bantuan teknologi Kecerdasan Buatan (AI).</span>
+                            </div>
+                            
+                            <div class="dev-tags">
+                                <span class="dev-tag"><svg class="icon-sm" style="color:#818cf8;"><use href="#icon-list"></use></svg> Desain Interaktif</span>
+                                <span class="dev-tag"><svg class="icon-sm" style="color:#f59e0b;"><use href="#icon-fort"></use></svg> Sejarah Indonesia</span>
+                                <span class="dev-tag"><svg class="icon-sm" style="color:#f97316;"><use href="#icon-book"></use></svg> Berbasis Web Offline</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="border-top:1px solid rgba(51,65,85,0.5); padding-top:1rem; margin-top:auto; font-size:0.75rem; color:#94a3b8; display:flex; justify-content:space-between;">
+                        <p>Versi Aplikasi: v2.0.0 (Full Offline Standalone) • Web Audio API</p>
+                        <p>© 2026 Lab Maya Sejarah Interaktif Indonesia.</p>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Notification Toast -->
+        <div id="toast" class="toast">Aksi Berhasil!</div>
+    </div>
+
+    <!-- AUDIO BACKGROUND -->
+    <audio id="bg-music" loop preload="auto">
+        <source src="assets/sound/Bayang Jawa Bara.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- ================= JAVASCRIPT LOGIC ================= -->
+    <script>
+        // --- AUDIO ENGINE (Web Audio API & BGM Lokal) ---
+        let audioCtx = null;
+        let isMuted = false;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playBeep(frequency = 440, duration = 0.1, type = 'sine', vol = 0.15) {
+            if (isMuted || !audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+                gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) { console.error("Audio error: ", e); }
+        }
+
+        function playTabSound() { playBeep(523.25, 0.08, 'triangle'); }
+        function playActionSound(isGerilya) {
+            if (isGerilya) {
+                playBeep(329.63, 0.15, 'sine');
+                setTimeout(() => playBeep(392.00, 0.15, 'sine'), 80);
+            } else {
+                playBeep(220.00, 0.2, 'sawtooth');
+                setTimeout(() => playBeep(164.81, 0.2, 'sawtooth'), 100);
+            }
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            const icon = document.getElementById('sound-icon');
+            const text = document.getElementById('sound-text');
+            const bgMusic = document.getElementById('bg-music');
+
+            if (isMuted) {
+                icon.innerHTML = `<use href="#icon-volume-xmark"></use>`;
+                text.innerText = "Suara: OFF";
+                bgMusic.pause();
+            } else {
+                icon.innerHTML = `<use href="#icon-volume-high"></use>`;
+                text.innerText = "Suara: ON";
+                bgMusic.play();
+                playBeep(440, 0.1);
+            }
+        }
+
+        let isNarratorPlaying = false;
+        function playNarrator(section) {
+            if ('speechSynthesis' in window) {
+                const bgMusic = document.getElementById('bg-music');
+                if (isNarratorPlaying) {
+                    window.speechSynthesis.cancel();
+                    isNarratorPlaying = false;
+                    document.getElementById('narrator-play-icon').innerHTML = `<use href="#icon-play"></use>`;
+                    if (!isMuted) bgMusic.volume = 0.3;
+                    return;
+                }
+                let text = "Selamat datang di Lab Maya Perang Jawa. Perang ini dipicu pemasangan patok oleh Belanda yang melewati makam leluhur Pangeran Diponegoro secara sepihak. Pangeran membalas dengan taktik perang gerilya yang dahsyat, sedangkan Jenderal De Kock meresponsnya dengan sistem Benteng Stelsel.";
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = "id-ID";
+                
+                if (!isMuted) bgMusic.volume = 0.05;
+                utterance.onstart = () => {
+                    isNarratorPlaying = true;
+                    document.getElementById('narrator-play-icon').innerHTML = `<use href="#icon-pause"></use>`;
+                };
+                utterance.onend = () => {
+                    isNarratorPlaying = false;
+                    document.getElementById('narrator-play-icon').innerHTML = `<use href="#icon-play"></use>`;
+                    if (!isMuted) bgMusic.volume = 0.3;
+                };
+                window.speechSynthesis.speak(utterance);
+            } else {
+                showToast("Sistem Anda tidak mendukung Text-to-Speech offline.");
+            }
+        }
+
+        // --- UI LOGIC ---
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 2500);
+        }
+
+        function switchTab(tabName) {
+            playTabSound();
+            document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+            document.getElementById(`content-${tabName}`).classList.add('active');
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+
+        let taktikState = { gerilya: false, benteng: false };
+
+        function changeFase(value) {
+            playBeep(300 + (value * 100), 0.1, 'sine');
+            const titles = [
+                "Fase 1: Pengepungan Tegalrejo",
+                "Fase 2: Perang Gerilya (1826-1828)",
+                "Fase 3: Benteng Stelsel (1828-1830)"
+            ];
+            const descs = [
+                "Belanda menyerang kediaman Pangeran Diponegoro. Laskar memindahkan basis ke Gua Selarong.",
+                "Perang meluas ke seluruh Jawa Tengah. Laskar gerilya beroperasi dengan tangkas.",
+                "Jenderal De Kock menerapkan taktik Benteng Stelsel untuk menjepit pergerakan pasukan."
+            ];
+            const valIdx = parseInt(value) - 1;
+            
+            document.getElementById('fase-title').innerText = titles[valIdx];
+            document.getElementById('fase-desc').innerText = descs[valIdx];
+
+            const bgRugi = document.getElementById('bar-rugi-belanda');
+            const txtRugi = document.getElementById('stat-rugi-belanda');
+            const bgMobi = document.getElementById('bar-mobilitas');
+            const txtMobi = document.getElementById('stat-mobilitas');
+            const bgKontrol = document.getElementById('bar-kontrol');
+            const txtKontrol = document.getElementById('stat-kontrol');
+            
+            const isGer = taktikState.gerilya;
+            const isBen = taktikState.benteng;
+
+            if (value == "1") {
+                bgRugi.style.width = isGer ? "90%" : "70%";
+                txtRugi.innerText = isGer ? "Sangat Tinggi" : "Tinggi";
+                bgMobi.style.width = isGer ? "95%" : "80%";
+                txtMobi.innerText = isGer ? "Sangat Bebas" : "Cukup Bebas";
+                bgKontrol.style.width = isBen ? "40%" : "20%";
+                txtKontrol.innerText = isBen ? "Garnisun Tersebar" : "Sangat Terbatas";
+                document.getElementById('analisis-kesimpulan').innerText = "Selama fase awal, strategi gerilya rakyat sangat mendominasi medan karena pemahaman wilayah yang superior.";
+            } else if (value == "2") {
+                bgRugi.style.width = isGer ? "95%" : "85%";
+                txtRugi.innerText = "Kerugian Maksimal";
+                bgMobi.style.width = isGer ? "90%" : "75%";
+                txtMobi.innerText = "Sangat Mobile";
+                bgKontrol.style.width = isBen ? "50%" : "30%";
+                txtKontrol.innerText = "Sebagian Kota";
+                document.getElementById('analisis-kesimpulan').innerText = "Puncak ancaman bagi kekuasaan Hindia Belanda. Kas kolonial hampir bangkrut total.";
+            } else {
+                bgRugi.style.width = isBen ? "45%" : "75%";
+                txtRugi.innerText = isBen ? "Berhasil Ditekan" : "Tinggi";
+                bgMobi.style.width = isGer ? "55%" : "30%";
+                txtMobi.innerText = isGer ? "Terbatas" : "Lumpuh Total";
+                bgKontrol.style.width = isBen ? "90%" : "60%";
+                txtKontrol.innerText = isBen ? "Sangat Kuat" : "Kuat";
+                document.getElementById('analisis-kesimpulan').innerText = "Benteng Stelsel sukses menekan laju gerilya dan memutus logistik rakyat.";
+            }
+        }
+
+        function toggleTaktik(type) {
+            if (type === 'gerilya') {
+                taktikState.gerilya = !taktikState.gerilya;
+                playActionSound(true);
+                const btn = document.getElementById('btn-taktik-gerilya');
+                document.getElementById('gerilya-group').style.opacity = taktikState.gerilya ? "1" : "0";
+                taktikState.gerilya ? btn.classList.add('active') : btn.classList.remove('active');
+                showToast(taktikState.gerilya ? "Taktik Gerilya Diterapkan!" : "Taktik Gerilya Dinonaktifkan.");
+            } else {
+                taktikState.benteng = !taktikState.benteng;
+                playActionSound(false);
+                const btn = document.getElementById('btn-taktik-benteng');
+                document.getElementById('benteng-group').style.opacity = taktikState.benteng ? "1" : "0";
+                taktikState.benteng ? btn.classList.add('active') : btn.classList.remove('active');
+                showToast(taktikState.benteng ? "Benteng Stelsel Dibangun!" : "Benteng Stelsel Dihancurkan.");
+            }
+            changeFase(document.getElementById('fase-slider').value);
+        }
+
+        function showLocationInfo(location) {
+            playBeep(659.25, 0.1, 'sine');
+            const data = {
+                'Selarong': { title: "Gua Selarong", desc: "Markas gerilya utama Pangeran Diponegoro pada awal perang setelah Tegalrejo diserang." },
+                'Tegalrejo': { title: "Tegalrejo", desc: "Kediaman utama Pangeran Diponegoro. Lokasi pembakaran yang memicu perlawanan rakyat." },
+                'Yogyakarta': { title: "Yogyakarta & Keraton", desc: "Pusat pemerintahan Kesultanan." },
+                'Magelang': { title: "Magelang", desc: "Lokasi perundingan jebakan di mana Pangeran Diponegoro ditangkap oleh Jenderal De Kock." }
+            };
+            document.getElementById('info-nama-lokasi').innerText = data[location].title;
+            document.getElementById('info-deskripsi-lokasi').innerText = data[location].desc;
+            document.getElementById('info-lokasi').classList.add('show');
+        }
+
+        function closeLocationInfo() {
+            playBeep(440, 0.05, 'sine');
+            document.getElementById('info-lokasi').classList.remove('show');
+        }
+
+        function submitLKPD() {
+            const q1 = document.getElementById('lkpd-q1').value;
+            const q2 = document.getElementById('lkpd-q2').value.trim();
+            if (!q1 || q2 === "") {
+                playBeep(220, 0.3, 'sawtooth');
+                showToast("Harap isi semua pertanyaan terlebih dahulu!");
+                return;
+            }
+            let score = (q1 === 'B') ? 50 : 0;
+            let keywords = ["pantang menyerah", "prinsip", "rakyat", "pahlawan", "keadilan", "keyakinan", "integritas"];
+            score += keywords.some(kw => q2.toLowerCase().includes(kw)) ? 50 : 25;
+
+            playBeep(523.25, 0.1, 'sine');
+            setTimeout(() => playBeep(659.25, 0.1, 'sine'), 100);
+            setTimeout(() => playBeep(783.99, 0.2, 'sine'), 200);
+
+            document.getElementById('lkpd-status').innerHTML = `<span style="color:#34d399; font-weight:bold;">Terkirim • Nilai: ${score}/100</span>`;
+            showToast(`LKPD Berhasil Dikirim! Skor Anda: ${score}/100`);
+        }
+
+        function resetLab() {
+            playBeep(880, 0.15, 'sawtooth');
+            setTimeout(() => playBeep(440, 0.2, 'sawtooth'), 150);
+
+            document.getElementById('fase-slider').value = "1";
+            taktikState.gerilya = false;
+            taktikState.benteng = false;
+            
+            document.getElementById('btn-taktik-gerilya').classList.remove('active');
+            document.getElementById('btn-taktik-benteng').classList.remove('active');
+            document.getElementById('gerilya-group').style.opacity = "0";
+            document.getElementById('benteng-group').style.opacity = "0";
+            closeLocationInfo();
+            changeFase("1");
+
+            document.getElementById('lkpd-q1').value = "";
+            document.getElementById('lkpd-q2').value = "";
+            document.getElementById('lkpd-status').innerHTML = "Belum diserahkan";
+
+            switchTab('teori');
+            showToast("Lab berhasil di-reset!");
+        }
+
+        function simulateLoading() {
+            let progress = 0;
+            const bar = document.getElementById('loading-bar');
+            const text = document.getElementById('loading-text');
+            const interval = setInterval(() => {
+                progress += Math.floor(Math.random() * 15) + 5;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        document.getElementById('loading-container').classList.add('hidden');
+                        document.getElementById('btn-start-lab').classList.remove('hidden');
+                    }, 500);
+                }
+                bar.style.width = progress + '%';
+                text.innerText = `Memuat Aset Lab... ${progress}%`;
+            }, 200);
+        }
+
+        function startLab() {
+            initAudio();
+            const bgMusic = document.getElementById('bg-music');
+            bgMusic.volume = 0.3;
+            if (!isMuted) {
+                const playPromise = bgMusic.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(e => {
+                        console.log("Browser memblokir pemutaran otomatis: ", e);
+                        showToast("Klik tombol Suara di atas jika lagu tidak terputar otomatis.");
+                    });
+                }
+            }
+            playBeep(392.00, 0.15, 'triangle'); 
+            setTimeout(() => playBeep(523.25, 0.15, 'triangle'), 150); 
+            setTimeout(() => playBeep(659.25, 0.4, 'triangle'), 300); 
+
+            const splash = document.getElementById('splash-screen');
+            splash.style.opacity = '0';
+            setTimeout(() => { splash.classList.add('hidden'); }, 1000);
+        }
+
+        window.onload = function() {
+            changeFase("1");
+            simulateLoading();
+        };
+    </script>
+</body>
+</html>
